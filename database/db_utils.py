@@ -369,3 +369,42 @@ def get_missing_descriptions_stats():
         print(f"Error fetching missing description stats: {e}")
         return stats
 
+def get_fund_metadata_df(fund_id):
+    """
+    Fetch metadata for a specific fund ID and return as a DataFrame with a full_key column.
+    
+    Args:
+        fund_id (int): The ID of the fund
+        
+    Returns:
+        pd.DataFrame: Metadata records with 'full_key' column
+    """
+    query = """
+        SELECT
+            ldmm.fund_id,
+            ldmm.id as datagroup_id,
+            ldmm.datagroup_display_name as datagroup,
+            lkmm.id,
+            lkmm.key_display_name as key, 
+            lkmm.formula, 
+            lkmm.calculation_level, 
+            lkmm.is_current,
+            case when lkmm.is_current then 'current' else 'pf' end as ctx
+        FROM lm_datagroup_metadata_master ldmm
+        LEFT JOIN lm_key_metadata_master lkmm ON lkmm.datagroup_id = ldmm.id
+        WHERE
+        ldmm.fund_id = 19 and
+        ldmm.id != 5
+        --and
+        --lkmm.is_current is true
+        -- order by lkmm.calculation_level, lkmm.datagroup_id, lkmm.sequence;
+        order by lkmm.key_display_name, lkmm.is_current;
+    """
+    
+    try:
+        df = execute_query(query)
+        if not df.empty:
+            df["full_key"] = df["fund_id"].astype(str) + "!" + df["datagroup"].astype(str) + "!" + df["key"].astype(str) + "!" + df["ctx"].astype(str)
+        return df
+    except Exception as e:
+        raise Exception(f"Failed to fetch fund metadata df: {str(e)}")

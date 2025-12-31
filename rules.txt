@@ -1,0 +1,4 @@
+- root values -> 0
+- empty string -> 1
+- current -> pipeline -> pf
+- is_calculated - false -> formula is null -> should be 0
